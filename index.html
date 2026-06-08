@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIFE QUEST</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #11121a;
+    --card: #16172200;
+    --border: #2a2d45;
+    --accent: #00f5d4;
+    --accent2: #f72585;
+    --accent3: #ffd60a;
+    --accent4: #7b2ff7;
+    --text: #e8eaf6;
+    --muted: #6b6f8a;
+    --glow: 0 0 20px rgba(0,245,212,0.3);
+    --glow2: 0 0 20px rgba(247,37,133,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,212,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,212,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 30px 0 24px;
+    position: relative;
+  }
+
+  .header-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 8vw, 52px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent4), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    letter-spacing: 4px;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.xp::before { background: var(--accent); }
+  .stat-card.streak::before { background: var(--accent3); }
+  .stat-card.lvl::before { background: var(--accent2); }
+
+  .stat-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(18px, 5vw, 28px);
+    font-weight: 700;
+  }
+  .stat-card.xp .stat-value { color: var(--accent); }
+  .stat-card.streak .stat-value { color: var(--accent3); }
+  .stat-card.lvl .stat-value { color: var(--accent2); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* XP BAR */
+  .xp-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+  }
+
+  .xp-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .xp-bar-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+  }
+
+  .xp-bar-count {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .xp-bar-track {
+    background: var(--border);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent4), var(--accent));
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 12px rgba(0,245,212,0.5);
+  }
+
+  /* DATE */
+  .date-bar {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .date-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+  }
+
+  /* PHASE LABELS */
+  .phase-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 10px;
+  }
+
+  .phase-icon { font-size: 18px; }
+
+  .phase-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .phase-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* TASK CARDS */
+  .task {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .task::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    transition: all 0.3s;
+  }
+
+  .task.sleep::before { background: var(--accent4); }
+  .task.morning::before { background: var(--accent); }
+  .task.commute::before { background: var(--accent3); }
+  .task.work::before { background: var(--accent2); }
+  .task.study::before { background: #06d6a0; }
+  .task.evening::before { background: #ff9f1c; }
+
+  .task:hover {
+    border-color: rgba(0,245,212,0.3);
+    transform: translateX(2px);
+  }
+
+  .task.done {
+    opacity: 0.5;
+    border-color: transparent;
+  }
+
+  .task.done .task-title {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .task-check {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: all 0.3s;
+    background: transparent;
+  }
+
+  .task.done .task-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,245,212,0.4);
+  }
+
+  .task-emoji {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .task-info { flex: 1; min-width: 0; }
+
+  .task-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+
+  .task-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+
+  .task-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .task-xp {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    letter-spacing: 1px;
+  }
+
+  .task.sleep .task-xp { background: rgba(123,47,247,0.15); color: var(--accent4); border: 1px solid rgba(123,47,247,0.3); }
+  .task.morning .task-xp { background: rgba(0,245,212,0.1); color: var(--accent); border: 1px solid rgba(0,245,212,0.25); }
+  .task.commute .task-xp { background: rgba(255,214,10,0.1); color: var(--accent3); border: 1px solid rgba(255,214,10,0.25); }
+  .task.work .task-xp { background: rgba(247,37,133,0.1); color: var(--accent2); border: 1px solid rgba(247,37,133,0.25); }
+  .task.study .task-xp { background: rgba(6,214,160,0.1); color: #06d6a0; border: 1px solid rgba(6,214,160,0.25); }
+  .task.evening .task-xp { background: rgba(255,159,28,0.1); color: #ff9f1c; border: 1px solid rgba(255,159,28,0.25); }
+
+  /* LEVEL UP TOAST */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: linear-gradient(135deg, var(--accent4), var(--accent));
+    color: #000;
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 12px 28px;
+    border-radius: 40px;
+    box-shadow: 0 8px 32px rgba(0,245,212,0.4);
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* RESET BUTTON */
+  .reset-btn {
+    display: block;
+    margin: 28px auto 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    padding: 10px 24px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  /* COMPLETION GLOW when all done */
+  .all-done-banner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, rgba(0,245,212,0.08), rgba(123,47,247,0.08));
+    border: 1px solid rgba(0,245,212,0.2);
+    border-radius: 12px;
+  }
+
+  .all-done-banner.show { display: block; }
+
+  .all-done-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+
+  .all-done-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-tag">// DAILY OPERATION //</div>
+    <h1>LIFE QUEST</h1>
+    <div class="header-sub">Discipline · Growth · Mastery</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card xp">
+      <div class="stat-label">Today's XP</div>
+      <div class="stat-value" id="todayXP">0</div>
+      <div class="stat-sub">/ 1000 XP</div>
+    </div>
+    <div class="stat-card streak">
+      <div class="stat-label">Day Streak</div>
+      <div class="stat-value" id="streakVal">1</div>
+      <div class="stat-sub">🔥 Keep it up</div>
+    </div>
+    <div class="stat-card lvl">
+      <div class="stat-label">Level</div>
+      <div class="stat-value" id="lvlVal">1</div>
+      <div class="stat-sub">Rookie Grinder</div>
+    </div>
+  </div>
+
+  <!-- XP BAR -->
+  <div class="xp-bar-wrap">
+    <div class="xp-bar-header">
+      <span class="xp-bar-label">Progress to next level</span>
+      <span class="xp-bar-count" id="xpBarText">0 / 1000 XP</span>
+    </div>
+    <div class="xp-bar-track">
+      <div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="date-bar">
+    <span class="live-dot"></span>
+    <span class="date-text" id="dateText">LOADING...</span>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="phase-label">
+    <span class="phase-icon">🌙</span>
+    <span class="phase-name">Sleep Protocol</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="task sleep" data-xp="200" onclick="toggle(this)">
+    <div class="task-check" id="check0"></div>
+    <div class="task-emoji">😴</div>
+    <div class="task-info">
+      <div class="task-time">11:00 PM → 5:30 AM</div>
+      <div class="task-title">Deep Sleep Mission</div>
+      <div class="task-desc">6.5 hrs · No screen 30 min before bed</div>
+    </div>
+    <div class="task-xp">+200 XP</div>
+  </div>
+
+  <!-- MORNING PHASE -->
+  <div class="phase-label">
+    <span class="phase-icon">⚡</span>
+    <span class="phase-name">Morning Protocol</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="task morning" data-xp="50" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🌅</div>
+    <div class="task-info">
+      <div class="task-time">5:30 AM · 5 min</div>
+      <div class="task-title">Wake Up & Hydrate</div>
+      <div class="task-desc">Cold water · Get out of bed immediately</div>
+    </div>
+    <div class="task-xp">+50 XP</div>
+  </div>
+
+  <div class="task morning" data-xp="120" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🏋️</div>
+    <div class="task-info">
+      <div class="task-time">5:35 AM · 45 min</div>
+      <div class="task-title">Workout Quest</div>
+      <div class="task-desc">Moderate intensity · Cardio / Weights / Yoga</div>
+    </div>
+    <div class="task-xp">+120 XP</div>
+  </div>
+
+  <div class="task morning" data-xp="40" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🚿</div>
+    <div class="task-info">
+      <div class="task-time">6:20 AM · 15 min</div>
+      <div class="task-title">Morning Shower</div>
+      <div class="task-desc">Refresh + get combat ready</div>
+    </div>
+    <div class="task-xp">+40 XP</div>
+  </div>
+
+  <div class="task morning" data-xp="30" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🍳</div>
+    <div class="task-info">
+      <div class="task-time">6:35 AM · 20 min</div>
+      <div class="task-title">Fuel Up</div>
+      <div class="task-desc">High protein breakfast · No skipping</div>
+    </div>
+    <div class="task-xp">+30 XP</div>
+  </div>
+
+  <!-- COMMUTE -->
+  <div class="phase-label">
+    <span class="phase-icon">🚀</span>
+    <span class="phase-name">Commute</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="task commute" data-xp="60" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🎧</div>
+    <div class="task-info">
+      <div class="task-time">7:00 AM · 60 min</div>
+      <div class="task-title">Commute XP Farm</div>
+      <div class="task-desc">Podcast / Audiobook / Lecture · No doom scrolling</div>
+    </div>
+    <div class="task-xp">+60 XP</div>
+  </div>
+
+  <!-- WORK -->
+  <div class="phase-label">
+    <span class="phase-icon">🏥</span>
+    <span class="phase-name">Work Raid</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="task work" data-xp="150" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">💼</div>
+    <div class="task-info">
+      <div class="task-time">9:00 AM → 4:00 PM</div>
+      <div class="task-title">Hospital Shift</div>
+      <div class="task-desc">Show up 100% · Stay sharp · Help people</div>
+    </div>
+    <div class="task-xp">+150 XP</div>
+  </div>
+
+  <!-- COMMUTE BACK -->
+  <div class="task commute" data-xp="60" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🎧</div>
+    <div class="task-info">
+      <div class="task-time">4:00 PM · 60 min</div>
+      <div class="task-title">Return Commute XP Farm</div>
+      <div class="task-desc">Study audio / Review notes · Active return</div>
+    </div>
+    <div class="task-xp">+60 XP</div>
+  </div>
+
+  <!-- EVENING PHASE -->
+  <div class="phase-label">
+    <span class="phase-icon">📚</span>
+    <span class="phase-name">Study Dungeon</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="task study" data-xp="80" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🚿</div>
+    <div class="task-info">
+      <div class="task-time">5:00 PM · 15 min</div>
+      <div class="task-title">Evening Shower + Reset</div>
+      <div class="task-desc">Freshen up · Transition into study mode</div>
+    </div>
+    <div class="task-xp">+80 XP</div>
+  </div>
+
+  <div class="task study" data-xp="100" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">📖</div>
+    <div class="task-info">
+      <div class="task-time">5:20 PM · 2 hrs</div>
+      <div class="task-title">Study Block I</div>
+      <div class="task-desc">Deep focus · Pomodoro 50/10 · Phone away</div>
+    </div>
+    <div class="task-xp">+100 XP</div>
+  </div>
+
+  <div class="task evening" data-xp="30" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🍽️</div>
+    <div class="task-info">
+      <div class="task-time">7:20 PM · 30 min</div>
+      <div class="task-title">Dinner + Decompress</div>
+      <div class="task-desc">Eat mindfully · Light break</div>
+    </div>
+    <div class="task-xp">+30 XP</div>
+  </div>
+
+  <div class="task study" data-xp="100" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">📖</div>
+    <div class="task-info">
+      <div class="task-time">7:50 PM · 2 hrs</div>
+      <div class="task-title">Study Block II</div>
+      <div class="task-desc">Practice problems · Review · Active recall</div>
+    </div>
+    <div class="task-xp">+100 XP</div>
+  </div>
+
+  <div class="task study" data-xp="50" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">✏️</div>
+    <div class="task-info">
+      <div class="task-time">9:50 PM · 30 min</div>
+      <div class="task-title">Daily Debrief</div>
+      <div class="task-desc">Journal · Review wins · Plan tomorrow</div>
+    </div>
+    <div class="task-xp">+50 XP</div>
+  </div>
+
+  <div class="task evening" data-xp="30" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">🌙</div>
+    <div class="task-info">
+      <div class="task-time">10:20 PM · 30 min</div>
+      <div class="task-title">Wind Down Ritual</div>
+      <div class="task-desc">No screens · Light read / Stretch · Dim lights</div>
+    </div>
+    <div class="task-xp">+30 XP</div>
+  </div>
+
+  <div class="task sleep" data-xp="0" onclick="toggle(this)">
+    <div class="task-check"></div>
+    <div class="task-emoji">💤</div>
+    <div class="task-info">
+      <div class="task-time">11:00 PM</div>
+      <div class="task-title">Lights Out</div>
+      <div class="task-desc">Sleep by 11 PM sharp · Protect the streak</div>
+    </div>
+    <div class="task-xp">✓</div>
+  </div>
+
+  <!-- ALL DONE BANNER -->
+  <div class="all-done-banner" id="allDoneBanner">
+    <div class="all-done-title">⚡ DAY CLEARED ⚡</div>
+    <div class="all-done-sub">All tasks completed · Streak extended · You won today</div>
+  </div>
+
+  <button class="reset-btn" onclick="resetDay()">↺ RESET DAY</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">⚡ LEVEL UP!</div>
+
+<script>
+  const XP_PER_LEVEL = 1000;
+  const LEVEL_TITLES = [
+    "Rookie Grinder","Focused Fighter","Daily Warrior",
+    "Discipline Engine","Iron Routine","Unstoppable Machine",
+    "Elite Operator","Life Architect","Legendary Grinder","TRANSCENDENT"
+  ];
+
+  let totalXP = parseInt(localStorage.getItem('lq_totalXP') || '0');
+  let streak = parseInt(localStorage.getItem('lq_streak') || '1');
+  let lastDate = localStorage.getItem('lq_lastDate') || '';
+  let taskState = JSON.parse(localStorage.getItem('lq_tasks') || '{}');
+
+  const today = new Date();
+  const todayStr = today.toDateString();
+
+  // Streak logic
+  if (lastDate && lastDate !== todayStr) {
+    const last = new Date(lastDate);
+    const diff = Math.round((today - last) / 86400000);
+    if (diff === 1) { streak++; }
+    else if (diff > 1) { streak = 1; }
+    taskState = {};
+  }
+  localStorage.setItem('lq_lastDate', todayStr);
+  localStorage.setItem('lq_streak', streak);
+  localStorage.setItem('lq_tasks', JSON.stringify(taskState));
+
+  // Set date
+  document.getElementById('dateText').textContent =
+    today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).toUpperCase();
+
+  const tasks = document.querySelectorAll('.task');
+  tasks.forEach((t, i) => {
+    if (taskState[i]) {
+      t.classList.add('done');
+      const ch = t.querySelector('.task-check');
+      if (ch) { ch.textContent = '✓'; ch.style.background = 'var(--accent)'; ch.style.borderColor = 'var(--accent)'; }
+    }
+  });
+
+  updateUI();
+
+  function toggle(el) {
+    const idx = [...tasks].indexOf(el);
+    const xp = parseInt(el.dataset.xp) || 0;
+    const isDone = el.classList.contains('done');
+    const ch = el.querySelector('.task-check');
+
+    if (!isDone) {
+      el.classList.add('done');
+      taskState[idx] = true;
+      totalXP += xp;
+      if (ch) { ch.textContent = '✓'; ch.style.background = 'var(--accent)'; ch.style.borderColor = 'var(--accent)'; }
+    } else {
+      el.classList.remove('done');
+      taskState[idx] = false;
+      totalXP = Math.max(0, totalXP - xp);
+      if (ch) { ch.textContent = ''; ch.style.background = 'transparent'; ch.style.borderColor = 'var(--border)'; }
+    }
+
+    localStorage.setItem('lq_totalXP', totalXP);
+    localStorage.setItem('lq_tasks', JSON.stringify(taskState));
+    updateUI();
+    checkAllDone();
+  }
+
+  function updateUI() {
+    const level = Math.floor(totalXP / XP_PER_LEVEL) + 1;
+    const xpInLevel = totalXP % XP_PER_LEVEL;
+    const pct = (xpInLevel / XP_PER_LEVEL) * 100;
+
+    // Today XP
+    let todayXp = 0;
+    tasks.forEach((t, i) => { if (taskState[i]) todayXp += (parseInt(t.dataset.xp)||0); });
+
+    document.getElementById('todayXP').textContent = todayXp;
+    document.getElementById('streakVal').textContent = streak;
+    document.getElementById('lvlVal').textContent = level;
+    document.getElementById('xpBarFill').style.width = pct + '%';
+    document.getElementById('xpBarText').textContent = xpInLevel + ' / ' + XP_PER_LEVEL + ' XP';
+
+    const titleEl = document.querySelector('.stat-card.lvl .stat-sub');
+    if (titleEl) titleEl.textContent = LEVEL_TITLES[Math.min(level-1, LEVEL_TITLES.length-1)];
+  }
+
+  function checkAllDone() {
+    const all = [...tasks].every((t, i) => {
+      const xp = parseInt(t.dataset.xp);
+      return xp === 0 || taskState[i];
+    });
+    document.getElementById('allDoneBanner').classList.toggle('show', all);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function resetDay() {
+    taskState = {};
+    localStorage.setItem('lq_tasks', JSON.stringify(taskState));
+    tasks.forEach(t => {
+      t.classList.remove('done');
+      const ch = t.querySelector('.task-check');
+      if (ch) { ch.textContent = ''; ch.style.background = 'transparent'; ch.style.borderColor = 'var(--border)'; }
+    });
+    document.getElementById('allDoneBanner').classList.remove('show');
+    updateUI();
+  }
+
+  checkAllDone();
+</script>
+</body>
+</html>
